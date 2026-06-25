@@ -1,4 +1,11 @@
 import streamlit as st
+from Control.Control import gestorIncidencias
+from Modelo.Incidencia import Incidencia
 from Modelo.IncidenciaMalware import IncidenciaMalware
 from Modelo.IncidenciaPhishing import IncidenciaPhishing
 from Modelo.IncidenciaFuerzaBruta import IncidenciaFuerzaBruta
+from Modelo.IncidenciaAccesoNoAutorizado import IncidenciaAccesoNoAutorizado
+from Modelo.IncidenciaFugaDeDatos import IncidenciaFugaDeDatos
+
+
+
