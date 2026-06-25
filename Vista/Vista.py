@@ -1,3 +1,4 @@
 import streamlit as st
 from Modelo.IncidenciaMalware import IncidenciaMalware
-f
+from Modelo.IncidenciaPhishing import IncidenciaPhishing
+from Modelo.IncidenciaFuerzaBruta import IncidenciaFuerzaBruta
