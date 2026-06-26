@@ -1,6 +1,3 @@
-
-
-
 class Incidencia:
     def __init__(self, id, titulo, descripcion, fecha, afectados):
         self.id = id
@@ -8,7 +5,7 @@ class Incidencia:
         self.descripcion = descripcion
         self.fecha = fecha
         self.afectados = afectados or []
-        self.riesgo = "MEDIO"  # Valor por defecto del riesgo
+        self.riesgo = "MEDIO"
 
     def limpieza_datos(self):
         if isinstance(self.titulo, str):

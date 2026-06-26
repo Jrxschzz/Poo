@@ -12,22 +12,24 @@ from Modelo.IncidenciaPhishing import IncidenciaPhishing
 from Modelo.IncidenciaFuerzaBruta import IncidenciaFuerzaBruta
 from Modelo.IncidenciaAccesoNoAutorizado import IncidenciaAccesoNoAutorizado
 from Modelo.IncidenciaFugaDeDatos import IncidenciaFugaDeDatos
+from Modelo.Excepciones import ValidacionException, GestorDatosException
 
 
 st.set_page_config(page_title='Gestor simple', layout='wide')
 
 ruta_json = os.path.join(os.path.dirname(__file__), '..', 'incidencias.json')
-mapa_constructores = {
-    'IncidenciaMalware': IncidenciaMalware,
-    'IncidenciaPhishing': IncidenciaPhishing,
-    'IncidenciaFuerzaBruta': IncidenciaFuerzaBruta,
-    'IncidenciaAccesoNoAutorizado': IncidenciaAccesoNoAutorizado,
-    'IncidenciaFugaDeDatos': IncidenciaFugaDeDatos,
-}
+
+clases_incidentes = [
+    ('Phishing', IncidenciaPhishing),
+    ('Malware', IncidenciaMalware),
+    ('FuerzaBruta', IncidenciaFuerzaBruta),
+    ('FugaDeDatos', IncidenciaFugaDeDatos),
+    ('AccesoNoAutorizado', IncidenciaAccesoNoAutorizado),
+]
 
 if 'gestor' not in st.session_state:
     gestor_inicial = gestorIncidencias()
-    gestor_inicial.cargar_json(ruta_json, constructor_map=mapa_constructores)
+    gestor_inicial.cargar_json(ruta_json, constructor_map={nombre: clase for nombre, clase in clases_incidentes})
     st.session_state['gestor'] = gestor_inicial
 gestor = st.session_state['gestor']
 
@@ -41,7 +43,7 @@ with tab_formulario:
     with st.form('form_registro'):
         columna_izquierda, columna_derecha = st.columns(2)
         with columna_izquierda:
-            tipo_incidente = st.selectbox('Tipo de incidencia', ['Phishing', 'Malware', 'FuerzaBruta', 'FugaDeDatos', 'AccesoNoAutorizado'])
+            tipo_incidente = st.selectbox('Tipo de incidencia', [nombre for nombre, _ in clases_incidentes])
             identificador = st.text_input('ID')
             titulo = st.text_input('Título')
         with columna_derecha:
@@ -62,34 +64,54 @@ with tab_formulario:
         enviado = st.form_submit_button('Agregar incidencia')
 
     if enviado:
-        incidencia = None
-        if tipo_incidente == 'Malware':
-            incidencia = IncidenciaMalware(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-        elif tipo_incidente == 'Phishing':
-            incidencia = IncidenciaPhishing(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-        elif tipo_incidente == 'FuerzaBruta':
-            incidencia = IncidenciaFuerzaBruta(identificador, titulo, descripcion, fecha, [], valor_extra or 0)
-        elif tipo_incidente == 'FugaDeDatos':
-            incidencia = IncidenciaFugaDeDatos(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-        elif tipo_incidente == 'AccesoNoAutorizado':
-            incidencia = IncidenciaAccesoNoAutorizado(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-        else:
-            incidencia = Incidencia(identificador, titulo, descripcion, fecha, [])
-
-        incidencia.tipo = tipo_incidente
         try:
-            incidencia.limpieza_datos()
-        except Exception:
-            pass
-        try:
-            if hasattr(incidencia, 'calcular_riesgo'):
-                incidencia.calcular_riesgo()
-        except Exception:
-            pass
+            if not identificador or not str(identificador).strip():
+                raise ValidacionException('El campo ID es obligatorio.')
+            if not titulo or not str(titulo).strip():
+                raise ValidacionException('El campo título es obligatorio.')
+            if not descripcion or not str(descripcion).strip():
+                raise ValidacionException('El campo descripción es obligatorio.')
+            if fecha is None:
+                raise ValidacionException('Debes seleccionar una fecha.')
 
-        gestor.agregar_incidencia(incidencia)
-        gestor.guardar_json(ruta_json)
-        st.success('Incidencia añadida y guardada en incidencias')
+            if tipo_incidente in {'Malware', 'Phishing', 'FugaDeDatos', 'AccesoNoAutorizado'}:
+                if not valor_extra or not str(valor_extra).strip():
+                    raise ValidacionException('Falta información específica para este tipo de incidencia.')
+            if tipo_incidente == 'FuerzaBruta' and (valor_extra is None or int(valor_extra) < 0):
+                raise ValidacionException('El número de intentos no puede ser negativo.')
+
+            if tipo_incidente == 'Malware':
+                incidencia = IncidenciaMalware(identificador, titulo, descripcion, fecha, [], valor_extra or '')
+            elif tipo_incidente == 'Phishing':
+                incidencia = IncidenciaPhishing(identificador, titulo, descripcion, fecha, [], valor_extra or '')
+            elif tipo_incidente == 'FuerzaBruta':
+                incidencia = IncidenciaFuerzaBruta(identificador, titulo, descripcion, fecha, [], valor_extra or 0)
+            elif tipo_incidente == 'FugaDeDatos':
+                incidencia = IncidenciaFugaDeDatos(identificador, titulo, descripcion, fecha, [], valor_extra or '')
+            elif tipo_incidente == 'AccesoNoAutorizado':
+                incidencia = IncidenciaAccesoNoAutorizado(identificador, titulo, descripcion, fecha, [], valor_extra or '')
+            else:
+                incidencia = Incidencia(identificador, titulo, descripcion, fecha, [])
+
+            incidencia.tipo = tipo_incidente
+            try:
+                incidencia.limpieza_datos()
+            except Exception as error:
+                raise ValidacionException('Los datos de la incidencia no son válidos.') from error
+
+            try:
+                if hasattr(incidencia, 'calcular_riesgo'):
+                    incidencia.calcular_riesgo()
+            except Exception as error:
+                raise ValidacionException('No se pudo calcular el riesgo.') from error
+
+            gestor.agregar_incidencia(incidencia)
+            gestor.guardar_json(ruta_json)
+            st.success('Incidencia añadida y guardada en incidencias.json')
+        except ValidacionException as error:
+            st.error(str(error))
+        except GestorDatosException as error:
+            st.error(str(error))
 
 with tab_resultados:
     st.subheader('Incidencias registradas')

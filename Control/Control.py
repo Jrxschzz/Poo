@@ -1,3 +1,8 @@
+import json
+
+from Modelo.Excepciones import GestorDatosException
+
+
 class gestorIncidencias:
     def __init__(self):
         self.incidencias = []
@@ -7,36 +12,40 @@ class gestorIncidencias:
 
     def obtener_incidencias(self):
         return self.incidencias
-    
+
     def guardar_json(self, ruta):
-        import json
-        lista = []
-        for inc in self.incidencias:
-            d = dict(inc.__dict__)
-            d['tipo'] = inc.__class__.__name__
-            lista.append(d)
-        with open(ruta, 'w', encoding='utf-8') as f:
-            json.dump(lista, f, ensure_ascii=False, indent=2)
+        try:
+            lista = []
+            for inc in self.incidencias:
+                datos = dict(inc.__dict__)
+                datos['tipo'] = inc.__class__.__name__
+                lista.append(datos)
+            with open(ruta, 'w', encoding='utf-8') as archivo:
+                json.dump(lista, archivo, ensure_ascii=False, indent=2)
+        except OSError as error:
+            raise GestorDatosException(f'No se pudo guardar el archivo JSON: {error}') from error
 
     def cargar_json(self, ruta, constructor_map=None):
-        import json
         try:
-            with open(ruta, 'r', encoding='utf-8') as f:
-                datos = json.load(f)
+            with open(ruta, 'r', encoding='utf-8') as archivo:
+                datos = json.load(archivo)
         except FileNotFoundError:
             self.incidencias = []
             return
+        except (json.JSONDecodeError, OSError) as error:
+            raise GestorDatosException(f'No se pudo leer el archivo JSON: {error}') from error
+
         self.incidencias = []
-        for d in datos:
-            tipo = d.pop('tipo', None)
+        for dato in datos:
+            tipo = dato.pop('tipo', None)
             if constructor_map and tipo in constructor_map:
-                ctor = constructor_map[tipo]
+                constructor = constructor_map[tipo]
                 try:
-                    obj = ctor(**d)
+                    objeto = constructor(**dato)
                 except TypeError:
-                    obj = ctor(d.get('id'), d.get('titulo'), d.get('descripcion'), d.get('fecha'), d.get('afectados'))
-                self.incidencias.append(obj)
+                    objeto = constructor(dato.get('id'), dato.get('titulo'), dato.get('descripcion'), dato.get('fecha'), dato.get('afectados'))
+                self.incidencias.append(objeto)
             else:
                 from Modelo.Incidencia import Incidencia
-                obj = Incidencia(d.get('id'), d.get('titulo'), d.get('descripcion'), d.get('fecha'), d.get('afectados'))
-                self.incidencias.append(obj)
+                objeto = Incidencia(dato.get('id'), dato.get('titulo'), dato.get('descripcion'), dato.get('fecha'), dato.get('afectados'))
+                self.incidencias.append(objeto)
