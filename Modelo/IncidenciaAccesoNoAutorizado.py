@@ -9,3 +9,12 @@ class IncidenciaAccesoNoAutorizado(Incidencia):
     def limpieza_datos(self):
         super().limpieza_datos()
         self.metodo_acceso = self.metodo_acceso.strip()
+
+    def calcular_riesgo(self):
+        m = str(self.metodo_acceso).lower()
+        if 'explot' in m or 'root' in m or 'privileg' in m:
+            self.riesgo = 'CRÍTICO'
+        return self.riesgo
+
+    def recomendaciones(self):
+        return 'Revisar logs, revocar credenciales y auditar privilegios de acceso.'

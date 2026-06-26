@@ -9,3 +9,12 @@ class IncidenciaPhishing(Incidencia):
     def limpieza_datos(self):
         super().limpieza_datos()
         self.url_sospechosa = self.url_sospechosa.strip()
+
+    def calcular_riesgo(self):
+        # Si la URL está vacía, riesgo medio
+        if not self.url_sospechosa:
+            self.riesgo = 'MEDIO'
+        return self.riesgo
+
+    def recomendaciones(self):
+        return 'Bloquear remitente, avisar a usuarios y cambiar credenciales comprometidas.'
