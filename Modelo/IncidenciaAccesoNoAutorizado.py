@@ -21,4 +21,4 @@ class IncidenciaAccesoNoAutorizado(Incidencia):
         return self.riesgo
 
     def recomendaciones(self):
-        return "Revisar logs de acceso, revocar credenciales y auditar privilegios."
+        return "Revisar el acceso, eliminar credenciales."

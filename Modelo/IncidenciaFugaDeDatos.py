@@ -21,4 +21,4 @@ class IncidenciaFugaDeDatos(Incidencia):
         return self.riesgo
 
     def recomendaciones(self):
-        return "Notificar a los afectados, investigar el alcance y reforzar los controles de acceso."
+        return "Notificar a los afectados, investigar los daños y reforzar los controles para acceso."
