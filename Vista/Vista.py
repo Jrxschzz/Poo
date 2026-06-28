@@ -26,7 +26,7 @@ clases_incidentes = [
     ('Acceso No Autorizado', IncidenciaAccesoNoAutorizado),
 ]
 
-constructor_map_json = {
+constructor = {
     'IncidenciaPhishing': IncidenciaPhishing,
     'IncidenciaMalware': IncidenciaMalware,
     'IncidenciaFuerzaBruta': IncidenciaFuerzaBruta,
@@ -36,13 +36,13 @@ constructor_map_json = {
 
 if 'gestor' not in st.session_state:
     gestor_inicial = gestorIncidencias()
-    gestor_inicial.cargar_json(ruta_json, constructor_map=constructor_map_json)
+    gestor_inicial.cargar_json(ruta_json, constructor_map=constructor)
     st.session_state['gestor'] = gestor_inicial
 gestor = st.session_state['gestor']
 
 st.title("Centro de Control de Incidencias de Seguridad")
 
-columna_formulario, columna_listado = st.columns([1, 2])
+columna_formulario, columna_listado = st.columns([1, 2]) 
 
 with columna_formulario:
     st.header("Registrar Alerta")
