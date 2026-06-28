@@ -48,11 +48,11 @@ with columna_formulario:
     st.header("Registrar Alerta")
     
     with st.form("formulario_incidencia", clear_on_submit=True):
-        id_input = st.text_input("ID de la Incidencia (Ej: INC-001)")
+        id_input = st.text_input("ID de la Incidencia ")
         titulo_input = st.text_input("Título descriptivo")
         desc_input = st.text_area("Descripción detallada del suceso")
         fecha_input = st.date_input("Fecha de detección")
-        afectados_input = st.text_input("Usuarios/Sistemas afectados (separados por comas)")
+        afectados_input = st.text_input("Usuarios/Sistemas afectados")
         
         tipo_seleccionado = st.selectbox("Categoría de la Amenaza", [t[0] for t in clases_incidentes])
         
