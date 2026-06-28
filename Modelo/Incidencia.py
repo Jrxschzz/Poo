@@ -1,4 +1,6 @@
-class Incidencia:
+from abc import ABC, abstractmethod
+
+class Incidencia(ABC):
     def __init__(self, id, titulo, descripcion, fecha, afectados):
         self.id = id
         self.titulo = titulo
@@ -12,14 +14,11 @@ class Incidencia:
             self.titulo = self.titulo.strip()
         if isinstance(self.descripcion, str):
             self.descripcion = self.descripcion.strip()
-        self.fecha = str(self.fecha).strip()
-        self.afectados = [str(a).strip() for a in (self.afectados or [])]
 
+    @abstractmethod
     def calcular_riesgo(self):
-        return self.riesgo
+        pass
 
+    @abstractmethod
     def recomendaciones(self):
-        return "Revisar y aislar recursos afectados."
-
-    def to_dict(self):
-        return {k: v for k, v in self.__dict__.items()}
+        pass

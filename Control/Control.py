@@ -1,5 +1,5 @@
 import json
-
+import os
 from Modelo.Excepciones import GestorDatosException
 
 
@@ -17,7 +17,7 @@ class gestorIncidencias:
         try:
             lista = []
             for inc in self.incidencias:
-                datos = dict(inc.__dict__)
+                datos = inc.to_dict()
                 datos['tipo'] = inc.__class__.__name__
                 lista.append(datos)
             with open(ruta, 'w', encoding='utf-8') as archivo:
@@ -26,12 +26,13 @@ class gestorIncidencias:
             raise GestorDatosException(f'No se pudo guardar el archivo JSON: {error}') from error
 
     def cargar_json(self, ruta, constructor_map=None):
+        if not os.path.exists(ruta):
+            self.incidencias = []
+            return
+
         try:
             with open(ruta, 'r', encoding='utf-8') as archivo:
                 datos = json.load(archivo)
-        except FileNotFoundError:
-            self.incidencias = []
-            return
         except (json.JSONDecodeError, OSError) as error:
             raise GestorDatosException(f'No se pudo leer el archivo JSON: {error}') from error
 
@@ -42,10 +43,6 @@ class gestorIncidencias:
                 constructor = constructor_map[tipo]
                 try:
                     objeto = constructor(**dato)
-                except TypeError:
-                    objeto = constructor(dato.get('id'), dato.get('titulo'), dato.get('descripcion'), dato.get('fecha'), dato.get('afectados'))
-                self.incidencias.append(objeto)
-            else:
-                from Modelo.Incidencia import Incidencia
-                objeto = Incidencia(dato.get('id'), dato.get('titulo'), dato.get('descripcion'), dato.get('fecha'), dato.get('afectados'))
-                self.incidencias.append(objeto)
+                    self.incidencias.append(objeto)
+                except Exception as error:
+                    raise GestorDatosException(f'Error al reconstruir la incidencia de tipo {tipo}: {error}')

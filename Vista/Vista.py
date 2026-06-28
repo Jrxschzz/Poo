@@ -14,133 +14,139 @@ from Modelo.IncidenciaAccesoNoAutorizado import IncidenciaAccesoNoAutorizado
 from Modelo.IncidenciaFugaDeDatos import IncidenciaFugaDeDatos
 from Modelo.Excepciones import ValidacionException, GestorDatosException
 
-
-st.set_page_config(page_title='Gestor simple', layout='wide')
+st.set_page_config(page_title='Gestor de Incidencias de Ciberseguridad', layout='wide')
 
 ruta_json = os.path.join(os.path.dirname(__file__), '..', 'incidencias.json')
 
 clases_incidentes = [
     ('Phishing', IncidenciaPhishing),
     ('Malware', IncidenciaMalware),
-    ('FuerzaBruta', IncidenciaFuerzaBruta),
-    ('FugaDeDatos', IncidenciaFugaDeDatos),
-    ('AccesoNoAutorizado', IncidenciaAccesoNoAutorizado),
+    ('Fuerza Bruta', IncidenciaFuerzaBruta),
+    ('Fuga de Datos', IncidenciaFugaDeDatos),
+    ('Acceso No Autorizado', IncidenciaAccesoNoAutorizado),
 ]
+
+constructor_map_json = {
+    'IncidenciaPhishing': IncidenciaPhishing,
+    'IncidenciaMalware': IncidenciaMalware,
+    'IncidenciaFuerzaBruta': IncidenciaFuerzaBruta,
+    'IncidenciaFugaDeDatos': IncidenciaFugaDeDatos,
+    'IncidenciaAccesoNoAutorizado': IncidenciaAccesoNoAutorizado
+}
 
 if 'gestor' not in st.session_state:
     gestor_inicial = gestorIncidencias()
-    gestor_inicial.cargar_json(ruta_json, constructor_map={nombre: clase for nombre, clase in clases_incidentes})
+    gestor_inicial.cargar_json(ruta_json, constructor_map=constructor_map_json)
     st.session_state['gestor'] = gestor_inicial
 gestor = st.session_state['gestor']
 
-st.title('Gestor de Incidencias')
-st.caption('Registra y gestiona incidencias de ciberseguridad.')
+st.title("🛡️ Centro de Control de Incidencias de Seguridad")
 
-tab_formulario, tab_resultados = st.tabs(['Formulario', 'Resultados'])
+columna_formulario, columna_listado = st.columns([1, 2])
 
-with tab_formulario:
-    st.subheader('Registrar incidencia')
-    with st.form('form_registro'):
-        columna_izquierda, columna_derecha = st.columns(2)
-        with columna_izquierda:
-            tipo_incidente = st.selectbox('Tipo de incidencia', [nombre for nombre, _ in clases_incidentes])
-            identificador = st.text_input('ID')
-            titulo = st.text_input('Título')
-        with columna_derecha:
-            descripcion = st.text_area('Descripción')
-            fecha = st.date_input('Fecha')
-            valor_extra = None
-            if tipo_incidente == 'Malware':
-                valor_extra = st.text_input('Tipo de malware')
-            elif tipo_incidente == 'Phishing':
-                valor_extra = st.text_input('URL sospechosa')
-            elif tipo_incidente == 'FuerzaBruta':
-                valor_extra = st.number_input('Número de intentos', min_value=0, value=0)
-            elif tipo_incidente == 'FugaDeDatos':
-                valor_extra = st.text_input('Tipo de dato filtrado')
-            elif tipo_incidente == 'AccesoNoAutorizado':
-                valor_extra = st.text_input('Método de acceso')
+with columna_formulario:
+    st.header("Registrar Alerta")
+    
+    with st.form("formulario_incidencia", clear_on_submit=True):
+        id_input = st.text_input("ID de la Incidencia (Ej: INC-001)")
+        titulo_input = st.text_input("Título descriptivo")
+        desc_input = st.text_area("Descripción detallada del suceso")
+        fecha_input = st.date_input("Fecha de detección")
+        afectados_input = st.text_input("Usuarios/Sistemas afectados (separados por comas)")
+        
+        tipo_seleccionado = st.selectbox("Categoría de la Amenaza", [t[0] for t in clases_incidentes])
+        
+        campo_especifico = ""
+        if tipo_seleccionado == 'Phishing':
+            campo_especifico = st.text_input("URL Sospechosa / Enlace del correo")
+        elif tipo_seleccionado == 'Malware':
+            campo_especifico = st.text_input("Tipo de Malware detectado (Ej: Ransomware)")
+        elif tipo_seleccionado == 'Fuerza Bruta':
+            campo_especifico = st.number_input("Número de intentos de login registrados", min_value=1, step=1, value=1)
+        elif tipo_seleccionado == 'Fuga de Datos':
+            campo_especifico = st.text_input("Tipo de información expuesta (Ej: DNI, Tarjetas)")
+        elif tipo_seleccionado == 'Acceso No Autorizado':
+            campo_especifico = st.text_input("Método de acceso empleado (Ej: Root)")
 
-        enviado = st.form_submit_button('Agregar incidencia')
+        boton_enviar = st.form_submit_button("Dar de alta incidencia")
 
-    if enviado:
-        try:
-            if not identificador or not str(identificador).strip():
-                raise ValidacionException('El campo ID es obligatorio.')
-            if not titulo or not str(titulo).strip():
-                raise ValidacionException('El campo título es obligatorio.')
-            if not descripcion or not str(descripcion).strip():
-                raise ValidacionException('El campo descripción es obligatorio.')
-            if fecha is None:
-                raise ValidacionException('Debes seleccionar una fecha.')
-
-            if tipo_incidente in {'Malware', 'Phishing', 'FugaDeDatos', 'AccesoNoAutorizado'}:
-                if not valor_extra or not str(valor_extra).strip():
-                    raise ValidacionException('Falta información específica para este tipo de incidencia.')
-            if tipo_incidente == 'FuerzaBruta' and (valor_extra is None or int(valor_extra) < 0):
-                raise ValidacionException('El número de intentos no puede ser negativo.')
-
-            if tipo_incidente == 'Malware':
-                incidencia = IncidenciaMalware(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-            elif tipo_incidente == 'Phishing':
-                incidencia = IncidenciaPhishing(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-            elif tipo_incidente == 'FuerzaBruta':
-                incidencia = IncidenciaFuerzaBruta(identificador, titulo, descripcion, fecha, [], valor_extra or 0)
-            elif tipo_incidente == 'FugaDeDatos':
-                incidencia = IncidenciaFugaDeDatos(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-            elif tipo_incidente == 'AccesoNoAutorizado':
-                incidencia = IncidenciaAccesoNoAutorizado(identificador, titulo, descripcion, fecha, [], valor_extra or '')
-            else:
-                incidencia = Incidencia(identificador, titulo, descripcion, fecha, [])
-
-            incidencia.tipo = tipo_incidente
+        if boton_enviar:
             try:
-                incidencia.limpieza_datos()
-            except Exception as error:
-                raise ValidacionException('Los datos de la incidencia no son válidos.') from error
+                if not id_input.strip() or not titulo_input.strip() or not desc_input.strip():
+                    raise ValidacionException("Todos los campos principales son obligatorios.")
+                
+                lista_afectados = [a.strip() for a in afectados_input.split(",") if a.strip()] if afectados_input else []
+                
+                clase_elegida = next(c[1] for c in clases_incidentes if c[0] == tipo_seleccionado)
+                
+                kwargs = {
+                    'id': id_input.strip(),
+                    'titulo': titulo_input.strip(),
+                    'descripcion': desc_input.strip(),
+                    'fecha': str(fecha_input),
+                    'afectados': lista_afectados
+                }
+                
+                if tipo_seleccionado == 'Phishing': kwargs['url_sospechosa'] = campo_especifico
+                elif tipo_seleccionado == 'Malware': kwargs['tipo_malware'] = campo_especifico
+                elif tipo_seleccionado == 'Fuerza Bruta': kwargs['num_intentos'] = campo_especifico
+                elif tipo_seleccionado == 'Fuga de Datos': kwargs['tipo_dato'] = campo_especifico
+                elif tipo_seleccionado == 'Acceso No Autorizado': kwargs['metodo_acceso'] = campo_especifico
+                
+                nueva_incidencia = clase_elegida(**kwargs)
+                
+                nueva_incidencia.limpieza_datos()
+                nueva_incidencia.calcular_riesgo()
+                
+                gestor.agregar_incidencia(nueva_incidencia)
+                gestor.guardar_json(ruta_json)
+                
+                st.success(f"✔️ Incidencia registrada correctamente.")
+                st.rerun()
 
-            try:
-                if hasattr(incidencia, 'calcular_riesgo'):
-                    incidencia.calcular_riesgo()
-            except Exception as error:
-                raise ValidacionException('No se pudo calcular el riesgo.') from error
+            except ValidacionException as error_v:
+                st.error(f"Error en el formulario: {error_v}")
+            except GestorDatosException as error_d:
+                st.error(f"Error en el archivo de datos: {error_d}")
+            except Exception as e:
+                st.error(f"Error inesperado: {e}")
 
-            gestor.agregar_incidencia(incidencia)
-            gestor.guardar_json(ruta_json)
-            st.success('Incidencia añadida y guardada en incidencias.json')
-        except ValidacionException as error:
-            st.error(str(error))
-        except GestorDatosException as error:
-            st.error(str(error))
-
-with tab_resultados:
-    st.subheader('Incidencias registradas')
-    datos_incidentes = [incidencia.__dict__ for incidencia in gestor.obtener_incidencias()]
-    if datos_incidentes:
-        tabla = pd.DataFrame(datos_incidentes)
-        tipos_disponibles = sorted(set(tabla.get('tipo', [])))
-        riesgos_disponibles = sorted(set(tabla.get('riesgo', [])))
+with columna_listado:
+    st.header("Historial y Análisis de Riesgo")
+    
+    incidencias_actuales = gestor.obtener_incidencias()
+    
+    if not incidencias_actuales:
+        st.info("No hay incidencias registradas en el sistema actualmente.")
+    else:
+        datos_tabla = []
+        for inc in incidencias_actuales:
+            datos_tabla.append({
+                'id': inc.id,
+                'titulo': inc.titulo,
+                'tipo': inc.__class__.__name__.replace('Incidencia', ''),
+                'riesgo': inc.riesgo,
+                'fecha': inc.fecha,
+                'descripcion': inc.descripcion,
+                'objeto_real': inc  
+            })
+            
+        tabla = pd.DataFrame(datos_tabla)
+        
         columna_filtro_tipo, columna_filtro_riesgo = st.columns(2)
         with columna_filtro_tipo:
-            filtro_tipo = st.selectbox('Filtrar por tipo', ['Todos'] + tipos_disponibles)
+            filtro_tipo = st.selectbox("Filtrar por Categoría", ["Todos"] + list(tabla['tipo'].unique()))
         with columna_filtro_riesgo:
-            filtro_riesgo = st.selectbox('Filtrar por riesgo', ['Todos'] + riesgos_disponibles)
-
+            filtro_riesgo = st.selectbox("Filtrar por Nivel de Riesgo", ["Todos", "MEDIO", "ALTO", "CRÍTICO", "BAJO"])
+            
         tabla_filtrada = tabla.copy()
-        if 'recomendaciones' not in tabla_filtrada.columns:
-            def obtener_recomendacion(fila):
-                objeto_incidente = None
-                for incidente in gestor.obtener_incidencias():
-                    if str(getattr(incidente, 'id', '')) == str(fila.get('id', '')):
-                        objeto_incidente = incidente
-                        break
-                if objeto_incidente and hasattr(objeto_incidente, 'recomendaciones'):
-                    try:
-                        return objeto_incidente.recomendaciones()
-                    except Exception:
-                        return ''
-                return ''
-            tabla_filtrada['recomendaciones'] = tabla_filtrada.apply(obtener_recomendacion, axis=1)
+        
+        
+        def obtener_recomendacion(fila):
+            return fila['objeto_real'].recomendaciones()
+            
+        tabla_filtrada['recomendaciones'] = tabla_filtrada.apply(obtener_recomendacion, axis=1)
+        
         if filtro_tipo != 'Todos':
             tabla_filtrada = tabla_filtrada[tabla_filtrada['tipo'] == filtro_tipo]
         if filtro_riesgo != 'Todos':
@@ -154,8 +160,17 @@ with tab_resultados:
                 st.write(f"**ID:** {fila.get('id', '')}")
                 st.write(f"**Fecha:** {fila.get('fecha', '')}")
                 st.write(f"**Descripción:** {fila.get('descripcion', '')}")
+                
+                
+                inc_obj = fila['objeto_real']
+                if hasattr(inc_obj, 'url_sospechosa'): st.write(f"**URL:** `{inc_obj.url_sospechosa}`")
+                elif hasattr(inc_obj, 'tipo_malware'): st.write(f"**Malware:** `{inc_obj.tipo_malware}`")
+                elif hasattr(inc_obj, 'num_intentos'): st.write(f"**Intentos:** `{inc_obj.num_intentos}`")
+                elif hasattr(inc_obj, 'tipo_dato'): st.write(f"**Datos Expuestos:** `{inc_obj.tipo_dato}`")
+                elif hasattr(inc_obj, 'metodo_acceso'): st.write(f"**Método Acceso:** `{inc_obj.metodo_acceso}`")
+                
                 if fila.get('recomendaciones'):
-                    st.write(f"**Recomendación:** {fila['recomendaciones']}")
+                    st.info(f"💡 **Recomendación:** {fila['recomendaciones']}")
 
         st.subheader('Estadísticas')
         columna_estadistica_tipo, columna_estadistica_riesgo = st.columns(2)
@@ -165,9 +180,3 @@ with tab_resultados:
         with columna_estadistica_riesgo:
             st.write('Por riesgo:')
             st.bar_chart(tabla['riesgo'].value_counts())
-    else:
-        st.info('No hay incidencias registradas')
-
-
-
-
