@@ -40,7 +40,7 @@ if 'gestor' not in st.session_state:
     st.session_state['gestor'] = gestor_inicial
 gestor = st.session_state['gestor']
 
-st.title("🛡️ Centro de Control de Incidencias de Seguridad")
+st.title("Centro de Control de Incidencias de Seguridad")
 
 columna_formulario, columna_listado = st.columns([1, 2])
 
