@@ -7,6 +7,11 @@ class IncidenciaAccesoNoAutorizado(Incidencia):
         self.metodo_acceso = metodo_acceso
         self.riesgo = "ALTO"
 
+    def to_dict(self):
+        datos = super().to_dict()
+        datos['metodo_acceso'] = self.metodo_acceso
+        return datos
+
     def limpieza_datos(self):
         super().limpieza_datos()
         if isinstance(self.metodo_acceso, str):

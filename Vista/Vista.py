@@ -5,8 +5,8 @@ import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from datetime import date
 from Control.Control import gestorIncidencias
-from Modelo.Incidencia import Incidencia
 from Modelo.IncidenciaMalware import IncidenciaMalware
 from Modelo.IncidenciaPhishing import IncidenciaPhishing
 from Modelo.IncidenciaFuerzaBruta import IncidenciaFuerzaBruta
@@ -40,78 +40,67 @@ if 'gestor' not in st.session_state:
     st.session_state['gestor'] = gestor_inicial
 gestor = st.session_state['gestor']
 
-st.title("Centro de Control de Incidencias de Seguridad")
+st.title('Centro de Control de Incidencias de Seguridad')
 
-columna_formulario, columna_listado = st.columns([1, 2]) 
+tab_form, tab_historial = st.tabs(['Registrar alerta', 'Historial'])
 
-with columna_formulario:
-    st.header("Registrar Alerta")
-    
-    with st.form("formulario_incidencia", clear_on_submit=True):
-        id_input = st.text_input("ID de la Incidencia ")
-        titulo_input = st.text_input("Título descriptivo")
-        desc_input = st.text_area("Descripción detallada del suceso")
-        fecha_input = st.date_input("Fecha de detección")
-        afectados_input = st.text_input("Usuarios/Sistemas afectados")
-        
-        tipo_seleccionado = st.selectbox("Categoría de la Amenaza", [t[0] for t in clases_incidentes])
-        
-        campo_especifico = ""
+with tab_form:
+    st.header('Registrar alerta')
+    with st.form('formulario_incidencia', clear_on_submit=True):
+        id_input = st.text_input('ID de la incidencia')
+        titulo_input = st.text_input('Título descriptivo')
+        desc_input = st.text_area('Descripción detallada del suceso')
+        fecha_input = st.date_input('Fecha de detección', value=date.today())
+        afectados_input = st.text_input('Usuarios/Sistemas afectados')
+        tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_incidentes])
+
         if tipo_seleccionado == 'Phishing':
-            campo_especifico = st.text_input("URL Sospechosa / Enlace del correo")
+            campo_especifico = st.text_input('URL sospechosa / enlace del correo')
         elif tipo_seleccionado == 'Malware':
-            campo_especifico = st.text_input("Tipo de Malware detectado (Ej: Ransomware)")
+            campo_especifico = st.text_input('Tipo de malware detectado')
         elif tipo_seleccionado == 'Fuerza Bruta':
-            campo_especifico = st.number_input("Número de intentos de login registrados", min_value=1, step=1, value=1)
+            campo_especifico = st.number_input('Número de intentos de login registrados', min_value=1, step=1, value=1)
         elif tipo_seleccionado == 'Fuga de Datos':
-            campo_especifico = st.text_input("Tipo de información expuesta (Ej: DNI, Tarjetas)")
-        elif tipo_seleccionado == 'Acceso No Autorizado':
-            campo_especifico = st.text_input("Método de acceso empleado (Ej: Root)")
+            campo_especifico = st.text_input('Tipo de información expuesta')
+        else:
+            campo_especifico = st.text_input('Método de acceso empleado')
 
-        boton_enviar = st.form_submit_button("Dar de alta incidencia")
-
-        if boton_enviar:
+        if st.form_submit_button('Dar de alta incidencia'):
             try:
                 if not id_input.strip() or not titulo_input.strip() or not desc_input.strip():
-                    raise ValidacionException("Todos los campos principales son obligatorios.")
-                
-                lista_afectados = [a.strip() for a in afectados_input.split(",") if a.strip()] if afectados_input else []
-                
+                    raise ValidacionException('Todos los campos principales son obligatorios.')
+                lista_afectados = [a.strip() for a in afectados_input.split(',') if a.strip()]
                 clase_elegida = next(c[1] for c in clases_incidentes if c[0] == tipo_seleccionado)
-                
                 kwargs = {
                     'id': id_input.strip(),
                     'titulo': titulo_input.strip(),
                     'descripcion': desc_input.strip(),
-                    'fecha': str(fecha_input),
-                    'afectados': lista_afectados
+                    'fecha': fecha_input,
+                    'afectados': lista_afectados,
                 }
-                
-                if tipo_seleccionado == 'Phishing': kwargs['url_sospechosa'] = campo_especifico
-                elif tipo_seleccionado == 'Malware': kwargs['tipo_malware'] = campo_especifico
-                elif tipo_seleccionado == 'Fuerza Bruta': kwargs['num_intentos'] = campo_especifico
-                elif tipo_seleccionado == 'Fuga de Datos': kwargs['tipo_dato'] = campo_especifico
-                elif tipo_seleccionado == 'Acceso No Autorizado': kwargs['metodo_acceso'] = campo_especifico
-                
+                if tipo_seleccionado == 'Phishing':
+                    kwargs['url_sospechosa'] = campo_especifico
+                elif tipo_seleccionado == 'Malware':
+                    kwargs['tipo_malware'] = campo_especifico
+                elif tipo_seleccionado == 'Fuerza Bruta':
+                    kwargs['num_intentos'] = campo_especifico
+                elif tipo_seleccionado == 'Fuga de Datos':
+                    kwargs['tipo_dato'] = campo_especifico
+                else:
+                    kwargs['metodo_acceso'] = campo_especifico
                 nueva_incidencia = clase_elegida(**kwargs)
-                
                 nueva_incidencia.limpieza_datos()
                 nueva_incidencia.calcular_riesgo()
-                
                 gestor.agregar_incidencia(nueva_incidencia)
                 gestor.guardar_json(ruta_json)
-                
-                st.success(f"✔️ Incidencia registrada correctamente.")
+                st.success('Incidencia registrada correctamente.')
                 st.rerun()
-
-            except ValidacionException as error_v:
-                st.error(f"Error en el formulario: {error_v}")
-            except GestorDatosException as error_d:
-                st.error(f"Error en el archivo de datos: {error_d}")
+            except (ValidacionException, GestorDatosException) as error:
+                st.error(str(error))
             except Exception as e:
-                st.error(f"Error inesperado: {e}")
+                st.error(f'Error inesperado: {e}')
 
-with columna_listado:
+with tab_historial:
     st.header("Historial y Análisis de Riesgo")
     
     incidencias_actuales = gestor.obtener_incidencias()
@@ -132,51 +121,50 @@ with columna_listado:
             })
             
         tabla = pd.DataFrame(datos_tabla)
+        if not tabla.empty:
+            tabla['fecha'] = pd.to_datetime(tabla['fecha']).dt.date
         
-        columna_filtro_tipo, columna_filtro_riesgo = st.columns(2)
-        with columna_filtro_tipo:
-            filtro_tipo = st.selectbox("Filtrar por Categoría", ["Todos"] + list(tabla['tipo'].unique()))
-        with columna_filtro_riesgo:
-            filtro_riesgo = st.selectbox("Filtrar por Nivel de Riesgo", ["Todos", "MEDIO", "ALTO", "CRÍTICO", "BAJO"])
-            
-        tabla_filtrada = tabla.copy()
-        
-        
-        def obtener_recomendacion(fila):
-            return fila['objeto_real'].recomendaciones()
-            
-        tabla_filtrada['recomendaciones'] = tabla_filtrada.apply(obtener_recomendacion, axis=1)
-        
-        if filtro_tipo != 'Todos':
-            tabla_filtrada = tabla_filtrada[tabla_filtrada['tipo'] == filtro_tipo]
-        if filtro_riesgo != 'Todos':
-            tabla_filtrada = tabla_filtrada[tabla_filtrada['riesgo'] == filtro_riesgo]
+        filtro_tipo, filtro_riesgo, filtro_fecha = st.columns(3)
+        with filtro_tipo:
+            tipo_filtro = st.selectbox('Filtrar por categoría', ['Todos'] + sorted(tabla['tipo'].unique()))
+        with filtro_riesgo:
+            riesgo_filtro = st.selectbox('Filtrar por nivel de riesgo', ['Todos', 'MEDIO', 'ALTO', 'CRÍTICO', 'BAJO'])
+        with filtro_fecha:
+            fecha_filtro = st.date_input('Filtrar por fecha', value=date.today())
 
-        st.metric('Total', len(tabla_filtrada))
-        st.metric('Riesgos altos o críticos', int((tabla_filtrada['riesgo'].astype(str).str.upper().isin(['ALTO', 'CRÍTICO'])).sum()))
+        if tipo_filtro != 'Todos':
+            tabla = tabla[tabla['tipo'] == tipo_filtro]
+        if riesgo_filtro != 'Todos':
+            tabla = tabla[tabla['riesgo'] == riesgo_filtro]
+        tabla = tabla[tabla['fecha'] == fecha_filtro]
 
-        for _, fila in tabla_filtrada.iterrows():
+        tabla['recomendaciones'] = tabla['objeto_real'].apply(lambda inc: inc.recomendaciones())
+
+        st.metric('Total', len(tabla))
+        st.metric('Riesgos altos o críticos', int(tabla['riesgo'].astype(str).str.upper().isin(['ALTO', 'CRÍTICO']).sum()))
+
+        for _, fila in tabla.iterrows():
+            inc_obj = fila['objeto_real']
             with st.expander(f"{fila['titulo']} — {fila['tipo']} ({fila['riesgo']})"):
-                st.write(f"**ID:** {fila.get('id', '')}")
-                st.write(f"**Fecha:** {fila.get('fecha', '')}")
-                st.write(f"**Descripción:** {fila.get('descripcion', '')}")
-                
-                
-                inc_obj = fila['objeto_real']
-                if hasattr(inc_obj, 'url_sospechosa'): st.write(f"**URL:** `{inc_obj.url_sospechosa}`")
-                elif hasattr(inc_obj, 'tipo_malware'): st.write(f"**Malware:** `{inc_obj.tipo_malware}`")
-                elif hasattr(inc_obj, 'num_intentos'): st.write(f"**Intentos:** `{inc_obj.num_intentos}`")
-                elif hasattr(inc_obj, 'tipo_dato'): st.write(f"**Datos Expuestos:** `{inc_obj.tipo_dato}`")
-                elif hasattr(inc_obj, 'metodo_acceso'): st.write(f"**Método Acceso:** `{inc_obj.metodo_acceso}`")
-                
-                if fila.get('recomendaciones'):
-                    st.info(f"💡 **Recomendación:** {fila['recomendaciones']}")
+                st.write(f"**ID:** {fila['id']}")
+                st.write(f"**Fecha:** {fila['fecha']}")
+                st.write(f"**Descripción:** {fila['descripcion']}")
+                if hasattr(inc_obj, 'url_sospechosa'):
+                    st.write(f"**URL:** `{inc_obj.url_sospechosa}`")
+                elif hasattr(inc_obj, 'tipo_malware'):
+                    st.write(f"**Malware:** `{inc_obj.tipo_malware}`")
+                elif hasattr(inc_obj, 'num_intentos'):
+                    st.write(f"**Intentos:** `{inc_obj.num_intentos}`")
+                elif hasattr(inc_obj, 'tipo_dato'):
+                    st.write(f"**Datos expuestos:** `{inc_obj.tipo_dato}`")
+                elif hasattr(inc_obj, 'metodo_acceso'):
+                    st.write(f"**Método acceso:** `{inc_obj.metodo_acceso}`")
+                st.info(f"💡 {fila['recomendaciones']}")
 
-        st.subheader('Estadísticas')
-        columna_estadistica_tipo, columna_estadistica_riesgo = st.columns(2)
-        with columna_estadistica_tipo:
+        c1, c2 = st.columns(2)
+        with c1:
             st.write('Por tipo:')
             st.bar_chart(tabla['tipo'].value_counts())
-        with columna_estadistica_riesgo:
+        with c2:
             st.write('Por riesgo:')
             st.bar_chart(tabla['riesgo'].value_counts())

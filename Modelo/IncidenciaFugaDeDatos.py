@@ -7,6 +7,11 @@ class IncidenciaFugaDeDatos(Incidencia):
         self.tipo_dato = tipo_dato
         self.riesgo = "ALTO"
 
+    def to_dict(self):
+        datos = super().to_dict()
+        datos['tipo_dato'] = self.tipo_dato
+        return datos
+
     def limpieza_datos(self):
         super().limpieza_datos()
         if isinstance(self.tipo_dato, str):

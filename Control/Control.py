@@ -41,8 +41,21 @@ class gestorIncidencias:
             tipo = dato.pop('tipo', None)
             if constructor_map and tipo in constructor_map:
                 constructor = constructor_map[tipo]
+                dato_cargado = dato.copy()
+
+                if tipo == 'IncidenciaPhishing':
+                    dato_cargado.setdefault('url_sospechosa', '')
+                elif tipo == 'IncidenciaMalware':
+                    dato_cargado.setdefault('tipo_malware', '')
+                elif tipo == 'IncidenciaFuerzaBruta':
+                    dato_cargado.setdefault('num_intentos', 0)
+                elif tipo == 'IncidenciaFugaDeDatos':
+                    dato_cargado.setdefault('tipo_dato', '')
+                elif tipo == 'IncidenciaAccesoNoAutorizado':
+                    dato_cargado.setdefault('metodo_acceso', '')
+
                 try:
-                    objeto = constructor(**dato)
+                    objeto = constructor(**dato_cargado)
                     self.incidencias.append(objeto)
                 except Exception as error:
                     raise GestorDatosException(f'Error al reconstruir la incidencia de tipo {tipo}: {error}')
