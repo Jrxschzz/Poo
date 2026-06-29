@@ -24,7 +24,7 @@ class gestorIncidencias:
                 json.dump(lista, archivo, ensure_ascii=False, indent=2)
         except OSError as error:
             raise GestorDatosException(f'No se pudo guardar el archivo JSON: {error}') from error
-
+        
     def cargar_json(self, ruta, constructor_map=None):
         if not os.path.exists(ruta):
             self.incidencias = []
