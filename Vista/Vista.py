@@ -47,15 +47,15 @@ tab_form, tab_historial = st.tabs(['Registrar alerta', 'Historial'])
 with tab_form:
     st.header('Registrar alerta')
     with st.form('formulario_incidencia', clear_on_submit=True):
+        tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_incidentes])
         id_input = st.text_input('ID de la incidencia')
         titulo_input = st.text_input('Título descriptivo')
         desc_input = st.text_area('Descripción detallada del suceso')
         fecha_input = st.date_input('Fecha de detección', value=date.today())
-        afectados_input = st.text_input('Usuarios/Sistemas afectados')
-        tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_incidentes])
-
+        afectados_input = st.text_input('Usuarios o Sistemas afectados')
+       
         if tipo_seleccionado == 'Phishing':
-            campo_especifico = st.text_input('URL sospechosa / enlace del correo')
+            campo_especifico = st.text_input('URL sospechosa o enlace del correo')
         elif tipo_seleccionado == 'Malware':
             campo_especifico = st.text_input('Tipo de malware detectado')
         elif tipo_seleccionado == 'Fuerza Bruta':
@@ -159,7 +159,7 @@ with tab_historial:
                     st.write(f"**Datos expuestos:** `{inc_obj.tipo_dato}`")
                 elif hasattr(inc_obj, 'metodo_acceso'):
                     st.write(f"**Método acceso:** `{inc_obj.metodo_acceso}`")
-                st.info(f"💡 {fila['recomendaciones']}")
+                st.info(f"{fila['recomendaciones']}")
 
         c1, c2 = st.columns(2)
         with c1:
