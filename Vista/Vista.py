@@ -12,9 +12,10 @@ from Modelo.IncidenciaPhishing import IncidenciaPhishing
 from Modelo.IncidenciaFuerzaBruta import IncidenciaFuerzaBruta
 from Modelo.IncidenciaAccesoNoAutorizado import IncidenciaAccesoNoAutorizado
 from Modelo.IncidenciaFugaDeDatos import IncidenciaFugaDeDatos
-from Modelo.Excepciones import ValidacionException, GestorDatosException
+from Modelo.Excepciones import ValidacionCargaException
 
 st.set_page_config(page_title='Gestor de Incidencias de Ciberseguridad', layout='wide')
+st.subheader("Guarda tus incidencias de forma segura2)")
 
 ruta_json = os.path.join(os.path.dirname(__file__), '..', 'incidencias.json')
 
@@ -42,7 +43,7 @@ gestor = st.session_state['gestor']
 
 st.title('Centro de Control de Incidencias de Seguridad')
 
-tab_form, tab_historial = st.tabs(['Registrar alerta', 'Historial'])
+tab_form, tab_historial, tab_graficas = st.tabs(['Registrar alerta', 'Historial', 'Gráficas'])
 
 with tab_form:
     st.header('Registrar alerta')
@@ -68,7 +69,7 @@ with tab_form:
         if st.form_submit_button('Dar de alta incidencia'):
             try:
                 if not id_input.strip() or not titulo_input.strip() or not desc_input.strip():
-                    raise ValidacionException('Todos los campos principales son obligatorios.')
+                    raise ValidacionCargaException('Todos los campos principales son obligatorios.')
                 lista_afectados = [a.strip() for a in afectados_input.split(',') if a.strip()]
                 clase_elegida = next(c[1] for c in clases_incidentes if c[0] == tipo_seleccionado)
                 kwargs = {
@@ -93,12 +94,10 @@ with tab_form:
                 nueva_incidencia.calcular_riesgo()
                 gestor.agregar_incidencia(nueva_incidencia)
                 gestor.guardar_json(ruta_json)
-                st.success('Incidencia registrada correctamente.')
+                st.success('Incidencia registrada.')
                 st.rerun()
-            except (ValidacionException, GestorDatosException) as error:
+            except (ValidacionCargaException) as error:
                 st.error(str(error))
-            except Exception as e:
-                st.error(f'Error inesperado: {e}')
 
 with tab_historial:
     st.header("Historial y Análisis de Riesgo")
@@ -161,10 +160,24 @@ with tab_historial:
                     st.write(f"**Método acceso:** `{inc_obj.metodo_acceso}`")
                 st.info(f"{fila['recomendaciones']}")
 
+
+with tab_graficas:
+    st.header('Gráficas de riesgo')
+    incidencias_actuales = gestor.obtener_incidencias()
+    if not incidencias_actuales:
+        st.info('No hay incidencias para graficar todavía.')
+    else:
+        datos_graficas = []
+        for inc in incidencias_actuales:
+            datos_graficas.append({
+                'tipo': inc.__class__.__name__.replace('Incidencia', ''),
+                'riesgo': inc.riesgo,
+            })
+        tabla_graficas = pd.DataFrame(datos_graficas)
         c1, c2 = st.columns(2)
         with c1:
             st.write('Por tipo:')
-            st.bar_chart(tabla['tipo'].value_counts())
+            st.bar_chart(tabla_graficas['tipo'].value_counts())
         with c2:
             st.write('Por riesgo:')
-            st.bar_chart(tabla['riesgo'].value_counts())
+            st.bar_chart(tabla_graficas['riesgo'].value_counts())

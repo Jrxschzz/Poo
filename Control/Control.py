@@ -1,6 +1,6 @@
 import json
 import os
-from Modelo.Excepciones import GestorDatosException
+from Modelo.Excepciones import ValidacionCargaException
 
 
 class gestorIncidencias:
@@ -23,7 +23,7 @@ class gestorIncidencias:
             with open(ruta, 'w', encoding='utf-8') as archivo:
                 json.dump(lista, archivo, ensure_ascii=False, indent=2)
         except OSError as error:
-            raise GestorDatosException(f'No se pudo guardar el archivo JSON: {error}') from error
+            raise ValidacionCargaException(f'No se pudo guardar el archivo JSON: {error}') from error
         
     def cargar_json(self, ruta, constructor_map=None):
         if not os.path.exists(ruta):
@@ -34,7 +34,7 @@ class gestorIncidencias:
             with open(ruta, 'r', encoding='utf-8') as archivo:
                 datos = json.load(archivo)
         except (json.JSONDecodeError, OSError) as error:
-            raise GestorDatosException(f'No se pudo leer el archivo JSON: {error}') from error
+            raise ValidacionCargaException(f'No se pudo leer el archivo JSON: {error}') from error
 
         self.incidencias = []
         for dato in datos:
@@ -58,4 +58,4 @@ class gestorIncidencias:
                     objeto = constructor(**dato_cargado)
                     self.incidencias.append(objeto)
                 except Exception as error:
-                    raise GestorDatosException(f'Error al reconstruir la incidencia de tipo {tipo}: {error}')
+                    raise ValidacionCargaException(f'Error al reconstruir la incidencia de tipo {tipo}: {error}')
