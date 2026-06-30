@@ -71,24 +71,26 @@ with tab_form:
                     raise ValidacionCargaException('Todos los campos principales son obligatorios.')
 
                 clase_elegida = next(c[1] for c in clases_usadas if c[0] == tipo_seleccionado)
-                kwargs = {
-                    'id': id_input.strip(),
-                    'titulo': titulo_input.strip(),
-                    'descripcion': desc_input.strip(),
-                    'fecha': fecha_input,
+                datos = {
+                    "id": id_input,
+                    "titulo": titulo_input,
+                    "descripcion": desc_input,
+                    "fecha": fecha_input
                 }
-                campo_map = {
-                    'Phishing': ('url_sospechosa', campo_diferente),
-                    'Malware': ('tipo_malware', campo_diferente),
-                    'Fuerza Bruta': ('num_intentos', campo_diferente),
-                    'Fuga de Datos': ('tipo_dato', campo_diferente),
-                    'Acceso No Autorizado': ('metodo_acceso', campo_diferente),
-                }
-                campo_clave, campo_valor = campo_map.get(tipo_seleccionado, (None, None))
-                if campo_clave is not None:
-                    kwargs[campo_clave] = campo_valor
+                if tipo_seleccionado == "Phishing":
+                    datos["url_sospechosa"] = campo_diferente
 
-                nueva_incidencia = clase_elegida(**kwargs)
+                elif tipo_seleccionado == "Malware":
+                    datos["tipo_malware"] = campo_diferente
+                elif tipo_seleccionado == "Fuerza Bruta":
+                    datos["num_intentos"] = campo_diferente
+                elif tipo_seleccionado == "Fuga de Datos":
+                    datos["tipo_dato"] = campo_diferente
+                elif tipo_seleccionado == "Acceso No Autorizado":
+                    datos["metodo_acceso"] = campo_diferente
+
+
+                nueva_incidencia = clase_elegida(**datos)
                 nueva_incidencia.limpieza_datos()
                 nueva_incidencia.calcular_riesgo()
                 gestor.agregar_incidencia(nueva_incidencia)
@@ -138,7 +140,7 @@ with tab_historial:
         st.metric('Total', len(tabla))
         st.metric('Riesgos altos o críticos', int(tabla['riesgo'].astype(str).str.upper().isin(['ALTO', 'CRÍTICO']).sum()))
 
-        for _, fila in tabla.iterrows():
+        for _, fila in tabla.iterrows(): 
             inc_obj = fila['objeto_real']
             with st.expander(f"{fila['titulo']} — {fila['tipo']} ({fila['riesgo']})"):
                 st.write(f"**ID:** {fila['id']}")
