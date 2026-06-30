@@ -19,7 +19,7 @@ st.subheader("Guarda tus incidencias de forma segura")
 
 ruta_json = os.path.join(os.path.dirname(__file__), '..', 'incidencias.json')
 
-clases_incidentes = [
+clases_usadas= [
     ('Phishing', IncidenciaPhishing),
     ('Malware', IncidenciaMalware),
     ('Fuerza Bruta', IncidenciaFuerzaBruta),
@@ -48,55 +48,55 @@ tab_form, tab_historial, tab_graficas = st.tabs(['Registrar alerta', 'Historial'
 with tab_form:
     st.header('Registrar alerta')
     with st.form('formulario_incidencia', clear_on_submit=True):
-        tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_incidentes])
+        tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_usadas])
         id_input = st.text_input('ID de la incidencia')
         titulo_input = st.text_input('Título descriptivo')
         desc_input = st.text_area('Descripción detallada del suceso')
         fecha_input = st.date_input('Fecha de detección', value=date.today())
-        afectados_input = st.text_input('Usuarios o Sistemas afectados')
-       
+        
         if tipo_seleccionado == 'Phishing':
-            campo_especifico = st.text_input('URL sospechosa o enlace del correo')
+            campo_diferente = st.text_input('URL sospechosa o enlace del correo')
         elif tipo_seleccionado == 'Malware':
-            campo_especifico = st.text_input('Tipo de malware detectado')
+            campo_diferente = st.text_input('Tipo de malware detectado')
         elif tipo_seleccionado == 'Fuerza Bruta':
-            campo_especifico = st.number_input('Número de intentos de login registrados', min_value=1, step=1, value=1)
+            campo_diferente = st.number_input('Número de intentos de login registrados', min_value=1, step=1, value=1)
         elif tipo_seleccionado == 'Fuga de Datos':
-            campo_especifico = st.text_input('Tipo de información expuesta')
+            campo_diferente = st.text_input('Tipo de información expuesta')
         else:
-            campo_especifico = st.text_input('Método de acceso empleado')
+            campo_diferente = st.text_input('Método de acceso empleado')
 
         if st.form_submit_button('Dar de alta incidencia'):
             try:
                 if not id_input.strip() or not titulo_input.strip() or not desc_input.strip():
                     raise ValidacionCargaException('Todos los campos principales son obligatorios.')
-                lista_afectados = [a.strip() for a in afectados_input.split(',') if a.strip()]
-                clase_elegida = next(c[1] for c in clases_incidentes if c[0] == tipo_seleccionado)
+
+                clase_elegida = next(c[1] for c in clases_usadas if c[0] == tipo_seleccionado)
                 kwargs = {
                     'id': id_input.strip(),
                     'titulo': titulo_input.strip(),
                     'descripcion': desc_input.strip(),
                     'fecha': fecha_input,
-                    'afectados': lista_afectados,
                 }
-                if tipo_seleccionado == 'Phishing':
-                    kwargs['url_sospechosa'] = campo_especifico
-                elif tipo_seleccionado == 'Malware':
-                    kwargs['tipo_malware'] = campo_especifico
-                elif tipo_seleccionado == 'Fuerza Bruta':
-                    kwargs['num_intentos'] = campo_especifico
-                elif tipo_seleccionado == 'Fuga de Datos':
-                    kwargs['tipo_dato'] = campo_especifico
-                else:
-                    kwargs['metodo_acceso'] = campo_especifico
+                campo_map = {
+                    'Phishing': ('url_sospechosa', campo_diferente),
+                    'Malware': ('tipo_malware', campo_diferente),
+                    'Fuerza Bruta': ('num_intentos', campo_diferente),
+                    'Fuga de Datos': ('tipo_dato', campo_diferente),
+                    'Acceso No Autorizado': ('metodo_acceso', campo_diferente),
+                }
+                campo_clave, campo_valor = campo_map.get(tipo_seleccionado, (None, None))
+                if campo_clave is not None:
+                    kwargs[campo_clave] = campo_valor
+
                 nueva_incidencia = clase_elegida(**kwargs)
                 nueva_incidencia.limpieza_datos()
                 nueva_incidencia.calcular_riesgo()
                 gestor.agregar_incidencia(nueva_incidencia)
                 gestor.guardar_json(ruta_json)
+
                 st.success('Incidencia registrada.')
                 st.rerun()
-            except (ValidacionCargaException) as error:
+            except ValidacionCargaException as error:
                 st.error(str(error))
 
 with tab_historial:

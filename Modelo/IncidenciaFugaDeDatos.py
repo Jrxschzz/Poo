@@ -2,8 +2,8 @@ from Modelo.Incidencia import Incidencia
 
 
 class IncidenciaFugaDeDatos(Incidencia):
-    def __init__(self, id, titulo, descripcion, fecha, afectados, tipo_dato):
-        super().__init__(id, titulo, descripcion, fecha, afectados)
+    def __init__(self, id, titulo, descripcion, fecha, tipo_dato):
+        super().__init__(id, titulo, descripcion, fecha)
         self.tipo_dato = tipo_dato
         self.riesgo = "ALTO"
 
@@ -26,4 +26,4 @@ class IncidenciaFugaDeDatos(Incidencia):
         return self.riesgo
 
     def recomendaciones(self):
-        return "Notificar a los afectados, investigar los daños y reforzar los controles para acceso."
+        return "Notificar a los implicados, investigar los daños y reforzar los controles para acceso."

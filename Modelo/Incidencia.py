@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import date
 
 class Incidencia(ABC):
-    def __init__(self, id, titulo, descripcion, fecha, afectados):
+    def __init__(self, id, titulo, descripcion, fecha):
         self.id = id
         self.titulo = titulo
         self.descripcion = descripcion
@@ -16,7 +16,6 @@ class Incidencia(ABC):
         else:
             raise ValueError('Fecha inválida; debe ser un objeto date o una cadena ISO.')
 
-        self.afectados = afectados or []
         self.riesgo = "MEDIO"
 
     def limpieza_datos(self):
@@ -31,7 +30,6 @@ class Incidencia(ABC):
             'titulo': self.titulo,
             'descripcion': self.descripcion,
             'fecha': self.fecha.isoformat() if isinstance(self.fecha, date) else str(self.fecha),
-            'afectados': self.afectados,
         }
 
     @abstractmethod
