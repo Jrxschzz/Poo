@@ -6,8 +6,8 @@ class IncidenciaPhishing(Incidencia):
         self.url_sospechosa = url_sospechosa
         self.calcular_riesgo()
 
-    def to_dict(self):
-        datos = super().to_dict()
+    def pasar_diccionario(self):
+        datos = super().pasar_diccionario()
         datos['url_sospechosa'] = self.url_sospechosa
         return datos
 

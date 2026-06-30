@@ -15,7 +15,7 @@ from Modelo.IncidenciaFugaDeDatos import IncidenciaFugaDeDatos
 from Modelo.Excepciones import ValidacionCargaException
 
 st.set_page_config(page_title='Gestor de Incidencias de Ciberseguridad', layout='wide')
-st.subheader("Guarda tus incidencias de forma segura2)")
+st.subheader("Guarda tus incidencias de forma segura")
 
 ruta_json = os.path.join(os.path.dirname(__file__), '..', 'incidencias.json')
 
@@ -109,15 +109,11 @@ with tab_historial:
     else:
         datos_tabla = []
         for inc in incidencias_actuales:
-            datos_tabla.append({
-                'id': inc.id,
-                'titulo': inc.titulo,
-                'tipo': inc.__class__.__name__.replace('Incidencia', ''),
-                'riesgo': inc.riesgo,
-                'fecha': inc.fecha,
-                'descripcion': inc.descripcion,
-                'objeto_real': inc  
-            })
+            datos = inc.pasar_diccionario()
+            datos['tipo'] = inc.__class__.__name__.replace('Incidencia', '')
+            datos['riesgo'] = inc.riesgo
+            datos['objeto_real'] = inc
+            datos_tabla.append(datos)
             
         tabla = pd.DataFrame(datos_tabla)
         if not tabla.empty:

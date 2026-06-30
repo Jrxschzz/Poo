@@ -7,8 +7,8 @@ class IncidenciaAccesoNoAutorizado(Incidencia):
         self.metodo_acceso = metodo_acceso
         self.riesgo = "ALTO"
 
-    def to_dict(self):
-        datos = super().to_dict()
+    def pasar_diccionario(self):
+        datos = super().pasar_diccionario()
         datos['metodo_acceso'] = self.metodo_acceso
         return datos
 

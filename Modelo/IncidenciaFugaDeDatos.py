@@ -7,8 +7,8 @@ class IncidenciaFugaDeDatos(Incidencia):
         self.tipo_dato = tipo_dato
         self.riesgo = "ALTO"
 
-    def to_dict(self):
-        datos = super().to_dict()
+    def pasar_diccionario(self):
+        datos = super().pasar_diccionario()
         datos['tipo_dato'] = self.tipo_dato
         return datos
 

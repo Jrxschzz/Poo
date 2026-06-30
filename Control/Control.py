@@ -17,7 +17,7 @@ class gestorIncidencias:
         try:
             lista = []
             for inc in self.incidencias:
-                datos = inc.to_dict()
+                datos = inc.pasar_diccionario()
                 datos['tipo'] = inc.__class__.__name__
                 lista.append(datos)
             with open(ruta, 'w', encoding='utf-8') as archivo:

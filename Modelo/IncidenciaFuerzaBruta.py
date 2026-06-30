@@ -7,8 +7,8 @@ class IncidenciaFuerzaBruta(Incidencia):
         self.num_intentos = num_intentos
         self.riesgo = "ALTO"
 
-    def to_dict(self):
-        datos = super().to_dict()
+    def pasar_diccionario(self):
+        datos = super().pasar_diccionario()
         datos['num_intentos'] = self.num_intentos
         return datos
 

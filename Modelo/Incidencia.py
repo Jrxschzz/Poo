@@ -25,7 +25,7 @@ class Incidencia(ABC):
         if isinstance(self.descripcion, str):
             self.descripcion = self.descripcion.strip()
 
-    def to_dict(self):
+    def pasar_diccionario(self):
         return {
             'id': self.id,
             'titulo': self.titulo,
