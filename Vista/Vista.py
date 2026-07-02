@@ -19,14 +19,15 @@ st.subheader("Guarda tus incidencias de forma segura")
 
 ruta_json = os.path.join(os.path.dirname(__file__), '..', 'incidencias.json')
 
+#Tipos de clases que hemos usado
 clases_usadas= [
     ('Phishing', IncidenciaPhishing),
     ('Malware', IncidenciaMalware),
     ('Fuerza Bruta', IncidenciaFuerzaBruta),
-    ('Fuga de Datos', IncidenciaFugaDeDatos),
+    ('Fuga de Datos', IncidenciaFugaDeDatos), 
     ('Acceso No Autorizado', IncidenciaAccesoNoAutorizado),
 ]
-
+#Utilizar diccionarios para obtener clases a partir de su nombre
 constructor = {
     'IncidenciaPhishing': IncidenciaPhishing,
     'IncidenciaMalware': IncidenciaMalware,
@@ -48,11 +49,12 @@ tab_form, tab_historial, tab_graficas = st.tabs(['Registrar alerta', 'Historial'
 with tab_form:
     st.header('Registrar alerta')
     with st.form('formulario_incidencia', clear_on_submit=True):
+        #Comparamos el tipo elegido con las clases dispoibles de nuestra lista 
         tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_usadas])
-        id_input = st.text_input('ID de la incidencia')
-        titulo_input = st.text_input('Título descriptivo')
-        desc_input = st.text_area('Descripción detallada del suceso')
-        fecha_input = st.date_input('Fecha de detección', value=date.today())
+        id = st.text_input('ID de la incidencia')
+        titulo = st.text_input('Título descriptivo')
+        descripcion = st.text_area('Descripción detallada del suceso')
+        fecha = st.date_input('Fecha de detección', value=date.today())
         
         if tipo_seleccionado == 'Phishing':
             campo_diferente = st.text_input('URL sospechosa o enlace del correo')
@@ -67,15 +69,15 @@ with tab_form:
 
         if st.form_submit_button('Dar de alta incidencia'):
             try:
-                if not id_input.strip() or not titulo_input.strip() or not desc_input.strip():
+                if not id.strip() or not titulo.strip() or not descripcion.strip():
                     raise ValidacionCargaException('Todos los campos principales son obligatorios.')
 
                 clase_elegida = next(c[1] for c in clases_usadas if c[0] == tipo_seleccionado)
                 datos = {
-                    "id": id_input,
-                    "titulo": titulo_input,
-                    "descripcion": desc_input,
-                    "fecha": fecha_input
+                    "id": id,
+                    "titulo": titulo,
+                    "descripcion": descripcion,
+                    "fecha": fecha
                 }
                 if tipo_seleccionado == "Phishing":
                     datos["url_sospechosa"] = campo_diferente
@@ -99,7 +101,7 @@ with tab_form:
                 st.success('Incidencia registrada.')
                 st.rerun()
             except ValidacionCargaException as error:
-                st.error(str(error))
+                st.error(f'Ocurrio un problema para registrar la incidencia, revisar: {error}')
 
 with tab_historial:
     st.header("Historial y Análisis de Riesgo")
@@ -135,7 +137,10 @@ with tab_historial:
             tabla = tabla[tabla['riesgo'] == riesgo_filtro]
         tabla = tabla[tabla['fecha'] == fecha_filtro]
 
-        tabla['recomendaciones'] = tabla['objeto_real'].apply(lambda inc: inc.recomendaciones())
+        resultado = []
+        for inc in tabla['objeto_real']:
+            resultado.append(inc.recomendaciones())
+        tabla['recomendaciones'] = resultado
 
         st.metric('Total', len(tabla))
         st.metric('Riesgos altos o críticos', int(tabla['riesgo'].astype(str).str.upper().isin(['ALTO', 'CRÍTICO']).sum()))
@@ -146,6 +151,9 @@ with tab_historial:
                 st.write(f"**ID:** {fila['id']}")
                 st.write(f"**Fecha:** {fila['fecha']}")
                 st.write(f"**Descripción:** {fila['descripcion']}")
+                
+                #Buscamos en nuestro objeto creado si contiene ciertos atributos
+                
                 if hasattr(inc_obj, 'url_sospechosa'):
                     st.write(f"**URL:** `{inc_obj.url_sospechosa}`")
                 elif hasattr(inc_obj, 'tipo_malware'):

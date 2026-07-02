@@ -24,4 +24,4 @@ class IncidenciaPhishing(Incidencia):
         return self.riesgo
 
     def recomendaciones(self):
-        return "avisar a los usuarios y cambiar credenciales comprometidas."
+        return "avisar a los usuarios y cambiar credenciales que hayan sido comprometidas."

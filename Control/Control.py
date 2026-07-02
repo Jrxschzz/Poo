@@ -22,18 +22,17 @@ class gestorIncidencias:
                 lista.append(datos)
             with open(ruta, 'w', encoding='utf-8') as archivo:
                 json.dump(lista, archivo, ensure_ascii=False, indent=2)
-        except OSError as error:
+        except Exception as error:
             raise ValidacionCargaException(f'No se pudo guardar el archivo JSON: {error}') from error
         
     def cargar_json(self, ruta, constructor_map=None):
         if not os.path.exists(ruta):
             self.incidencias = []
             return
-
         try:
             with open(ruta, 'r', encoding='utf-8') as archivo:
                 datos = json.load(archivo)
-        except (json.JSONDecodeError, OSError) as error:
+        except (json.JSONDecodeError, Exception) as error:
             raise ValidacionCargaException(f'No se pudo leer el archivo JSON: {error}') from error
 
         self.incidencias = []

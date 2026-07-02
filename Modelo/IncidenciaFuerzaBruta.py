@@ -30,4 +30,4 @@ class IncidenciaFuerzaBruta(Incidencia):
         return self.riesgo
 
     def recomendaciones(self):
-        return "Bloquear IPs peligrosas, reforzar contraseñas y además activar autenticación en dos pasos."
+        return "Bloquear IPs peligrosas y activar autenticacion en dos pasos."
