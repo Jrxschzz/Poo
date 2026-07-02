@@ -48,24 +48,24 @@ tab_form, tab_historial, tab_graficas = st.tabs(['Registrar alerta', 'Historial'
 
 with tab_form:
     st.header('Registrar alerta')
+    #Comparamos el tipo elegido con las clases dispoibles de nuestra lista
+    tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_usadas], key='tipo_seleccionado')
     with st.form('formulario_incidencia', clear_on_submit=True):
-        #Comparamos el tipo elegido con las clases dispoibles de nuestra lista 
-        tipo_seleccionado = st.selectbox('Categoría de la amenaza', [t[0] for t in clases_usadas])
         id = st.text_input('ID de la incidencia')
         titulo = st.text_input('Título descriptivo')
         descripcion = st.text_area('Descripción detallada del suceso')
         fecha = st.date_input('Fecha de detección', value=date.today())
         
         if tipo_seleccionado == 'Phishing':
-            campo_diferente = st.text_input('URL sospechosa o enlace del correo')
+            campo_diferente = st.text_input('URL sospechosa o enlace del correo', key='campo_phishing')
         elif tipo_seleccionado == 'Malware':
-            campo_diferente = st.text_input('Tipo de malware detectado')
+            campo_diferente = st.text_input('Tipo de malware detectado', key='campo_malware')
         elif tipo_seleccionado == 'Fuerza Bruta':
-            campo_diferente = st.number_input('Número de intentos de login registrados', min_value=1, step=1, value=1)
+            campo_diferente = st.number_input('Número de intentos de login registrados', min_value=1, step=1, value=1, key='campo_fuerza')
         elif tipo_seleccionado == 'Fuga de Datos':
-            campo_diferente = st.text_input('Tipo de información expuesta')
+            campo_diferente = st.text_input('Tipo de información expuesta', key='campo_fuga')
         else:
-            campo_diferente = st.text_input('Método de acceso empleado')
+            campo_diferente = st.text_input('URL, correo o método de acceso empleado', key='campo_acceso')
 
         if st.form_submit_button('Dar de alta incidencia'):
             try:
@@ -81,7 +81,6 @@ with tab_form:
                 }
                 if tipo_seleccionado == "Phishing":
                     datos["url_sospechosa"] = campo_diferente
-
                 elif tipo_seleccionado == "Malware":
                     datos["tipo_malware"] = campo_diferente
                 elif tipo_seleccionado == "Fuerza Bruta":
@@ -136,7 +135,9 @@ with tab_historial:
         if riesgo_filtro != 'Todos':
             tabla = tabla[tabla['riesgo'] == riesgo_filtro]
         tabla = tabla[tabla['fecha'] == fecha_filtro]
-
+        
+        st.button("Borrar filtros", on_click=lambda: st.session_state.update({'filtro_tipo': 'Todos', 'filtro_riesgo': 'Todos', 'filtro_fecha': date.today()}))
+        
         resultado = []
         for inc in tabla['objeto_real']:
             resultado.append(inc.recomendaciones())
