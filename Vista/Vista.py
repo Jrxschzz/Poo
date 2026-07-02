@@ -61,11 +61,11 @@ with tab_form:
         elif tipo_seleccionado == 'Malware':
             campo_diferente = st.text_input('Tipo de malware detectado', key='campo_malware')
         elif tipo_seleccionado == 'Fuerza Bruta':
-            campo_diferente = st.number_input('Número de intentos de login registrados', min_value=1, step=1, value=1, key='campo_fuerza')
+            campo_diferente = st.number_input('Número de intentos  registrados', min_value=1, step=1, value=1, key='campo_fuerza')
         elif tipo_seleccionado == 'Fuga de Datos':
             campo_diferente = st.text_input('Tipo de información expuesta', key='campo_fuga')
         else:
-            campo_diferente = st.text_input('URL, correo o método de acceso empleado', key='campo_acceso')
+            campo_diferente = st.text_input('URL de acceso empleado', key='campo_acceso')
 
         if st.form_submit_button('Dar de alta incidencia'):
             try:
