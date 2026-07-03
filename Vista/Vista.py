@@ -44,7 +44,7 @@ gestor = st.session_state['gestor']
 
 st.title('Centro de Control de Incidencias de Seguridad')
 
-tab_form, tab_historial, tab_graficas = st.tabs(['Registrar alerta', 'Historial', 'Gráficas'])
+tab_form, tab_historial, tab_graficas = st.tabs(['Registrar alertas', 'Historial de incidencias', 'Gráficas'])
 
 with tab_form:
     st.header('Registrar alerta')
@@ -108,7 +108,7 @@ with tab_historial:
     incidencias_actuales = gestor.obtener_incidencias()
     
     if not incidencias_actuales:
-        st.info("No hay incidencias registradas en el sistema actualmente.")
+        st.info("No hay incidencias registradas en el sistema.")
     else:
         datos_tabla = []
         for inc in incidencias_actuales:
@@ -148,6 +148,7 @@ with tab_historial:
 
         for _, fila in tabla.iterrows(): 
             inc_obj = fila['objeto_real']
+            #Mostramos al usuario sus incidencias con un desplegable
             with st.expander(f"{fila['titulo']} — {fila['tipo']} ({fila['riesgo']})"):
                 st.write(f"**ID:** {fila['id']}")
                 st.write(f"**Fecha:** {fila['fecha']}")

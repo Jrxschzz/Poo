@@ -33,7 +33,7 @@ class gestorIncidencias:
             with open(ruta, 'r', encoding='utf-8') as archivo:
                 datos = json.load(archivo)
         except (json.JSONDecodeError, Exception) as error:
-            raise ValidacionCargaException(f'No se pudo leer el archivo JSON: {error}') from error
+            raise ValidacionCargaException(f'No se pudo leer el archivo: {error}') from error
 
         self.incidencias = []
         for dato in datos:
@@ -57,4 +57,4 @@ class gestorIncidencias:
                     objeto = constructor(**dato_cargado)
                     self.incidencias.append(objeto)
                 except Exception as error:
-                    raise ValidacionCargaException(f'Error al reconstruir la incidencia de tipo {tipo}: {error}')
+                    raise ValidacionCargaException(f'Error al cargar la incidencia de tipo {tipo}: {error}')

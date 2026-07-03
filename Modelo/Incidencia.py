@@ -6,7 +6,8 @@ class Incidencia(ABC):
         self.id = id
         self.titulo = titulo
         self.descripcion = descripcion
-
+        
+        #Comprobamos si la fecha es un string o es un objeto
         if isinstance(fecha, str):
             self.fecha = date.fromisoformat(fecha)
         elif isinstance(fecha, date):
@@ -14,7 +15,7 @@ class Incidencia(ABC):
         elif fecha is None:
             self.fecha = date.today()
         else:
-            raise ValueError('Fecha inválida; debe ser un objeto date o una cadena ISO.')
+            raise ValueError('Fecha inválida.')
 
         self.riesgo = "MEDIO"
 

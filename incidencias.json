@@ -4,7 +4,7 @@
     "titulo": "AccesoPrueba",
     "descripcion": "Acceso desde un pais extranjero",
     "fecha": "2026-07-02",
-    "metodo_acceso": "",
+    "metodo_acceso": "Internet",
     "tipo": "IncidenciaAccesoNoAutorizado"
   }
 ]
